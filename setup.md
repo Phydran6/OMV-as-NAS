@@ -327,7 +327,7 @@ Erwartet wird:
 
 ```
 # Append the hostname to the email subject.
-/^Subject: (.*)/ REPLACE Subject: [nas2.phytech.de] ${1}
+/^Subject: (.*)/ REPLACE Subject: [nas.local] ${1}
 /^From:/ REPLACE From: NAS <jo@wasup.com>
 ```
 
