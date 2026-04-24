@@ -260,7 +260,7 @@ Wichtig zu wissen: **Der Rebuild-Prozess läuft vollautomatisch auf mdadm-Ebene 
 
 ## Teil 5: Mail-Absender dauerhaft ändern (Salt-State)
 
-Standardmäßig schickt OMV Benachrichtigungen mit einem technischen Absender wie `it.phytech@gmail.com` oder `root`. Für bessere Übersichtlichkeit im Postfach ist ein sprechender Display-Name wünschenswert, z. B. `NAS2 <it.phytech@gmail.com>`.
+Standardmäßig schickt OMV Benachrichtigungen mit einem technischen Absender wie `jo@wasup.com` oder `root`. Für bessere Übersichtlichkeit im Postfach ist ein sprechender Display-Name wünschenswert, z. B. `NAS <jo@wasup.com>`.
 
 ### Warum es in der GUI nicht direkt geht
 
@@ -278,7 +278,7 @@ Die OMV-Hauptentwickler empfehlen für dauerhafte Zusatzkonfigurationen einen ei
 
 ```bash
 cp /etc/postfix/smtp_header_checks /etc/postfix/smtp_header_checks.bak
-echo '/^From:/ REPLACE From: NAS2 <it.phytech@gmail.com>' >> /etc/postfix/smtp_header_checks
+echo '/^From:/ REPLACE From: NAS <jo@wasup.com>' >> /etc/postfix/smtp_header_checks
 systemctl reload postfix
 ```
 
@@ -300,7 +300,7 @@ cat > /srv/salt/omv/deploy/postfix/99custom_from_header.sls << 'EOF'
 configure_postfix_custom_from_header:
   file.append:
     - name: "/etc/postfix/smtp_header_checks"
-    - text: "/^From:/ REPLACE From: NAS2 <it.phytech@gmail.com>"
+    - text: "/^From:/ REPLACE From: NAS <jo@wasup.com>"
 EOF
 ```
 
@@ -328,7 +328,7 @@ Erwartet wird:
 ```
 # Append the hostname to the email subject.
 /^Subject: (.*)/ REPLACE Subject: [nas2.phytech.de] ${1}
-/^From:/ REPLACE From: NAS2 <it.phytech@gmail.com>
+/^From:/ REPLACE From: NAS <jo@wasup.com>
 ```
 
 Die Lösung ist **idempotent** (keine Duplikate bei wiederholter Ausführung) und **update-sicher** (eigene Dateien in `/srv/salt/omv/deploy/` werden von OMV-Updates nicht überschrieben).
