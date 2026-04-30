@@ -28,10 +28,10 @@ Eine komplette, praxiserprobte Sammlung von Anleitungen rund um OpenMediaVault (
 
 ## Schnellnavigation
 
-- [USB-RAID Setup](docs/setup.md)
-- [Mail-Absender anpassen](docs/setup.md#mail-absender-dauerhaft-ändern-salt-state)
-- [OMV auf alter Hardware]([docs/omv-on-old-hardware.md](https://github.com/Phydran6/OMV-as-NAS/blob/main/omv-on-old-hardware.md))
-- [ACPI Shutdown Fix (DSDT-Override)](docs/acpi-shutdown-fix.md)
+- [USB-RAID Setup](setup.md)
+- [Mail-Absender anpassen](setup.md#mail-absender-dauerhaft-ändern-salt-state)
+- [OMV auf alter Hardware](omv-on-old-hardware.md)
+- [ACPI Shutdown Fix (DSDT-Override)](acpi-shutdown-fix.md)
 - [Lizenz](LICENSE)
 
 ## Zielgruppe
