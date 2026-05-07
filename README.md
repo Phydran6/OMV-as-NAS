@@ -70,3 +70,7 @@ Die Anleitungen wurden in Zusammenarbeit mit **Claude Opus 4.7** (Anthropic) era
 ## Mitwirken
 
 Verbesserungsvorschläge, Korrekturen und Erweiterungen sind willkommen — gerne via Issue oder Pull Request.
+
+## Changelog
+
+Alle Änderungen an diesem Projekt sind im [CHANGELOG.md](https://github.com/Phydran6/OMV-as-NAS/blob/main/CHANGELOG.md) dokumentiert.
