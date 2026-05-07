@@ -25,7 +25,7 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 
 ---
 
-## [1.0.0] - YYYY-MM-DD
+## [1.0.0] -  Apr 23, 2026
 
 ### Added
 - Erste Veröffentlichung der vollständigen Anleitung
