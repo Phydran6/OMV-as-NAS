@@ -17,6 +17,17 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 
 ---
 
+## [1.2.0] - 2026-06-07
+
+### Changed
+- Troubleshooting der `DeviceDisappeared` / `NewArray`-Phantom-Events grundlegend überarbeitet. Korrigierte Ursachenanalyse: Neueres mdadm exportiert bei Array-Namen mit Host-Präfix (`<hostname>:0`) kein `MD_DEVNAME`, daher legt die Debian-udev-Regel `63-md-raid-arrays.rules` den by-name-Symlink unter `/dev/md/` nicht an (bekannter OMV-8-Bug, openmediavault/openmediavault#2071). Neuer, downtime-freier Fix per lokaler udev-Regel (`99-local-md-symlink.rules`, Symlink aus dem Kernel-Namen `%k`) — ersetzt den bisherigen Ansatz über das Umschreiben der `ARRAY`-Zeile in `mdadm.conf` mit anschließendem Reboot.
+- Troubleshooting-Datei stilistisch an die übrigen Dokumente angeglichen (Heading-Struktur mit `#`/`##`, Abschnitt „Verwandte Dokumente").
+
+### Added
+- Verlinkung der Phantom-Events-Anleitung in der README (Schnellnavigation und Feature-Liste „USB-RAID").
+
+---
+
 ## [1.1.0] - 2026-05-07
 
 ### Added
@@ -38,6 +49,7 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 
 ---
 
-[Unreleased]: https://github.com/Phydran6/OMV-as-NAS/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/Phydran6/OMV-as-NAS/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/Phydran6/OMV-as-NAS/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/Phydran6/OMV-as-NAS/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/Phydran6/OMV-as-NAS/releases/tag/v1.0.0

@@ -15,6 +15,7 @@ Eine komplette, praxiserprobte Sammlung von Anleitungen rund um OpenMediaVault (
 - E-Mail-Benachrichtigungen bei Plattenausfällen
 - Failover-Tests (Software und Hardware)
 - Dauerhafter Custom-`From`-Header für Notification-Mails via Salt-State (überlebt OMV-Updates)
+- Fix für tägliche `DeviceDisappeared` / `NewArray`-Phantom-Mails nach dem OMV-8-Upgrade (fehlender by-name-Symlink)
 
 ### OMV auf alter Hardware
 - OMV 7 Installation auf 2010er-Atom-Boards (Cedarview & Co.)
@@ -30,6 +31,7 @@ Eine komplette, praxiserprobte Sammlung von Anleitungen rund um OpenMediaVault (
 
 - [USB-RAID Setup](setup.md)
 - [Mail-Absender anpassen](setup.md#mail-absender-dauerhaft-ändern-salt-state)
+- [Phantom-Events nach OMV-8-Upgrade beheben](troubleshooting-phantom-events.md)
 - [OMV auf alter Hardware](omv-on-old-hardware.md)
 - [ACPI Shutdown Fix (DSDT-Override)](acpi-shutdown-fix.md)
 - [Lizenz](LICENSE)

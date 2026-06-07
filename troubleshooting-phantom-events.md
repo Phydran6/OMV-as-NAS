@@ -1,8 +1,13 @@
-### Tägliche „DeviceDisappeared / NewArray"-Mails
+# Tägliche „DeviceDisappeared / NewArray"-Phantom-Events (mdadm)
 
-[#tägliche-devicedisappeared--newarray-mails](#t%C3%A4gliche-devicedisappeared--newarray-mails)
+Nach dem Upgrade auf **OMV 8** kommt täglich eine Cron-Mail von
+`/etc/cron.daily/openmediavault-mdadm`, obwohl das Array kerngesund ist. Diese
+Anleitung erklärt die eigentliche Ursache und behebt sie dauerhaft mit einer
+lokalen udev-Regel — ohne Reboot und ohne Array-Downtime.
 
-OMV verschickt täglich eine `cron.daily`-Mail mit folgendem Inhalt:
+## Symptom
+
+Täglich landet eine `cron.daily`-Mail mit folgendem Inhalt im Postfach:
 
 ```
 /etc/cron.daily/openmediavault-mdadm:
@@ -10,58 +15,76 @@ mdadm: DeviceDisappeared event detected on md device /dev/md/md0
 mdadm: NewArray event detected on md device /dev/md0
 ```
 
-Trotz der alarmierenden Wortwahl ist das Array gesund (`cat /proc/mdstat` zeigt `[UUUU]`). Es handelt sich um Phantom-Events.
+Trotz der alarmierenden Wortwahl ist das Array gesund (`cat /proc/mdstat` zeigt
+`[UUUU]`). Es handelt sich um reine Phantom-Events — kosmetisch, ohne realen
+Defekt.
 
-#### Ursache
+## Ursache
 
-[#ursache](#ursache)
+Dies ist ein OMV-8-Problem (siehe
+[openmediavault/openmediavault#2071](https://github.com/openmediavault/openmediavault/issues/2071)):
+Der by-name-Symlink `/dev/md/md0` fehlt.
 
-Der Pfadunterschied in den beiden Meldungen ist der Hinweis: `/dev/md/md0` (by-name-Symlink) vs. `/dev/md0` (Device-Node). Beim Aufruf von `mdadm --monitor --scan --oneshot` (was der OMV-Cronjob macht) sucht mdadm den by-name-Symlink unter `/dev/md/`, findet ihn nicht → meldet `DeviceDisappeared`. Dann sieht es `/dev/md0` → meldet `NewArray`. Beim nächsten Lauf das gleiche Spiel.
+Der Pfadunterschied in den beiden Meldungen ist der Hinweis: `/dev/md/md0`
+(by-name-Symlink) vs. `/dev/md0` (Device-Node). Der Cronjob ruft
+`mdadm --monitor --scan --oneshot` auf, das die Arrays unter `/dev/md/` sucht.
+Fehlt der Symlink, meldet mdadm den Pfad als verschwunden (`DeviceDisappeared`)
+und den rohen Device-Node `/dev/md0` als neu (`NewArray`) — bei jedem Lauf aufs
+Neue.
 
-Der Symlink fehlt, weil die `ARRAY`-Zeile in `/etc/mdadm/mdadm.conf` als Device-Pfad direkt `/dev/md0` referenziert statt eines by-name-Pfades wie `/dev/md/<name>`.
+Debian liefert die Regel, die den Symlink eigentlich anlegen sollte, bereits mit
+(`/usr/lib/udev/rules.d/63-md-raid-arrays.rules`):
 
-Prüfen:
+```
+ENV{DEVTYPE}=="disk", ENV{MD_DEVNAME}=="?*", SYMLINK+="md/$env{MD_DEVNAME}"
+```
+
+Sie greift aber nur, wenn `MD_DEVNAME` gesetzt ist. Bei Arrays, deren Name einen
+Host-Präfix trägt (`<hostname>:0`) und nicht als lokaler Host aufgelöst wird,
+exportiert neueres mdadm `MD_DEVNAME` **nicht** — also wird kein Symlink
+angelegt.
+
+Ursache bestätigen:
 
 ```bash
-ls -la /dev/md/
+ls -la /dev/md/                                 # leer oder „No such file or directory"
+mdadm --detail --no-devices --export /dev/md0
 ```
 
-Wenn das Verzeichnis nicht existiert oder den erwarteten Symlink nicht enthält, liegt genau dieses Problem vor.
-
-#### Stolperfalle: POSIX-Kompatibilität des Array-Namens
-
-[#stolperfalle-posix-kompatibilität-des-array-namens](#stolperfalle-posix-kompatibilit%C3%A4t-des-array-namens)
-
-Der Default-Array-Name nach `mdadm --create` enthält oft einen Doppelpunkt, z. B. `<hostname>:0`. Ein Doppelpunkt ist in POSIX-Dateinamen nicht erlaubt — mdadm verwirft den Pfad mit:
+Erwarteter Export — `MD_NAME` vorhanden, `MD_DEVNAME` fehlt:
 
 ```
-mdadm: Value "<hostname>:0" cannot be set as devname. Reason: Not POSIX compatible. Value ignored.
+MD_LEVEL=raid6
+MD_DEVICES=4
+MD_METADATA=1.2
+MD_UUID=<array-uuid>
+MD_NAME=<hostname>:0
 ```
 
-Daher muss der by-name-Pfad in der Config einen POSIX-konformen Namen verwenden (z. B. `<hostname>_0` mit Unterstrich statt Doppelpunkt).
+## Fix
 
-#### Fix
-
-[#fix](#fix)
-
-Backup, dann ARRAY-Zeile auf einen by-name-Pfad mit POSIX-konformem Namen umschreiben:
+Eine lokale udev-Regel ergänzen, die den Symlink aus dem Kernel-Namen (`%k`)
+anlegt — unabhängig von `MD_DEVNAME`. Dafür eine **eigene** Datei verwenden;
+OMVs eigene `99-openmediavault-md-raid.rules` **nicht** editieren, sie wird bei
+Updates überschrieben.
 
 ```bash
-cp /etc/mdadm/mdadm.conf /etc/mdadm/mdadm.conf.bak
-sed -i 's|ARRAY /dev/md0 |ARRAY /dev/md/<hostname>_0 |' /etc/mdadm/mdadm.conf
-update-initramfs -u
-reboot
+cat > /etc/udev/rules.d/99-local-md-symlink.rules << 'EOF'
+SUBSYSTEM=="block", ACTION=="add|change", KERNEL=="md[0-9]*", ENV{DEVTYPE}=="disk", SYMLINK+="md/%k"
+EOF
+
+udevadm control --reload-rules
+udevadm trigger --subsystem-match=block
 ```
 
-Nach dem Reboot verifizieren:
+## Verifizieren
 
 ```bash
-ls -la /dev/md/
+ls -la /dev/md/                         # md0 -> ../md0
+mdadm --monitor --scan --oneshot        # keine Ausgabe = keine Events
 ```
 
-Erwartet: ein Symlink `<hostname>_0 -> ../md0`.
-
-Den Cronjob manuell triggern und Logs prüfen:
+Optional den Cronjob manuell triggern und die Logs prüfen:
 
 ```bash
 run-parts /etc/cron.daily/
@@ -70,12 +93,26 @@ journalctl --since "2 minutes ago" | grep -iE "DeviceDisappeared|NewArray"
 
 Erwartet: keine Treffer mehr. Damit hören auch die täglichen Mails auf.
 
-#### Hinweis: `update-initramfs: command not found`
+## Hinweise
 
-[#hinweis-update-initramfs-command-not-found](#hinweis-update-initramfs-command-not-found)
+- **Reboot-fest:** udev legt den Symlink für jedes `md`-Device neu an, das
+  hochkommt.
+- **`%k` folgt dem Kernel-Namen automatisch.** Startet das Array nach einem
+  Kernel-Update als `/dev/md127`, wandert der Symlink mit. OMV passt
+  `mdadm.conf` beim nächsten Apply entsprechend an.
+- **Das ist ein Workaround für einen Upstream-OMV-Bug, kein Root-Cause-Fix.**
+  Die saubere Alternative — das Array unter seinem by-name-Pfad neu zusammenbauen
+  (`/dev/md/0`), sodass die Debian-Standardregel den Symlink erzeugt — erfordert
+  Array-Downtime (und ein POSIX-konformes Umbenennen, da ein Doppelpunkt in
+  `<hostname>:0` als Dateiname nicht erlaubt ist). Für ein kosmetisches Problem
+  lohnt das nicht.
+- **`command not found` trotz vorhandenem Binary:** Wird `mdadm` oder
+  `update-initramfs` als fehlend gemeldet, obwohl `/usr/sbin/…` existiert, ist
+  `/usr/sbin` nicht im `$PATH`. Tritt typischerweise auf, wenn man mit `su`
+  (statt `su -`) zu root wechselt — das übernimmt den User-PATH. Lösung: mit
+  `su -` oder `sudo -i` einloggen, oder den vollen Pfad nutzen.
 
-Wenn `update-initramfs` als angeblich fehlend gemeldet wird, obwohl `/usr/sbin/update-initramfs` existiert, ist `/usr/sbin` nicht im `$PATH`. Tritt typischerweise auf, wenn man mit `su` (statt `su -`) zu root wechselt — das übernimmt den User-PATH. Lösung: mit `su -` oder `sudo -i` einloggen, oder den vollen Pfad nutzen:
+## Verwandte Dokumente
 
-```bash
-/usr/sbin/update-initramfs -u
-```
+- [USB-RAID Setup](setup.md) — Aufbau des RAID 6 und Persistieren der
+  `mdadm.conf`

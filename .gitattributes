@@ -1,0 +1,8 @@
+# Einheitliche Zeilenenden: alle Textdateien werden im Repo und im
+# Arbeitsverzeichnis als LF gespeichert. Verhindert das CRLF/LF-Flippen
+# zwischen Windows (Bearbeitung) und Linux/OMV (Ausführung der Snippets).
+* text=auto eol=lf
+
+# Dokumentation explizit als Text mit LF
+*.md  text eol=lf
+LICENSE text eol=lf
