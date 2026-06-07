@@ -26,6 +26,10 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 ### Added
 - Verlinkung der Phantom-Events-Anleitung in der README (Schnellnavigation und Feature-Liste „USB-RAID").
 
+### Fixed
+- Versionierung in Ordnung gebracht: Git-Tags `v1.0.0`–`v1.2.0` nachgezogen, sodass die zuvor ins Leere zeigenden Compare-/Release-Links am Dateiende funktionieren.
+- Datumsformat der Version 1.0.0 auf ISO 8601 (`2026-04-23`) vereinheitlicht.
+
 ---
 
 ## [1.1.0] - 2026-05-07
@@ -36,7 +40,7 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 
 ---
 
-## [1.0.0] -  Apr 23, 2026
+## [1.0.0] - 2026-04-23
 
 ### Added
 - Erste Veröffentlichung der vollständigen Anleitung
